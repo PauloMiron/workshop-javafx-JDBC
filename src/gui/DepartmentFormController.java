@@ -2,6 +2,7 @@ package gui;
 
 import com.sun.webkit.network.Util;
 import db.DbException;
+import gui.listeners.DataChangeListener;
 import gui.util.Alerts;
 import gui.util.Constraints;
 import gui.util.Utils;
@@ -17,12 +18,15 @@ import model.dao.DaoFactory;
 import model.entities.Department;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class DepartmentFormController implements Initializable {
 
     private Department entity;
     private DepartmentService service;
+    private List<DataChangeListener> dataChangeListeners = new ArrayList<>();
 
     @FXML
     private TextField txtId;
@@ -45,6 +49,10 @@ public class DepartmentFormController implements Initializable {
 
     }
 
+    public void subscribeDataChangeListener(DataChangeListener listener){
+        dataChangeListeners.add(listener);
+    }
+
     @FXML
     public void onBtSaveAction(ActionEvent event){
         if (entity == null){
@@ -56,9 +64,16 @@ public class DepartmentFormController implements Initializable {
         try {
         entity = getFormData();
         service.saveOrUpadate(entity);
-            Utils.currentStage(event).close();
+        notifyDataChanceListeners();
+        Utils.currentStage(event).close();
         }catch (DbException e){
             Alerts.showAlert("Error save object",null,e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    private void notifyDataChanceListeners() {
+        for (DataChangeListener listener : dataChangeListeners){
+            listener.onDataChanged();
         }
     }
 
